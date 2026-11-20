@@ -96,6 +96,49 @@
       ]
     },
     {
+      "id": "ajv-zod-messages",
+      "label": "JSON-Schema 校验库（ajv / zod）的内置消息与格式标签",
+      "reason": "这些是校验库自带的通用报错与格式名（Number must be…、Invalid URL format、ISO date…），只在编辑 .claude/settings.json 等清单文件报错时出现，属第三方库文案。",
+      "patterns": [
+        "^(?:Number|String|Array|Date|BigInt|Object|Expected|Invalid|Intersection|No matching|It is default|Deprecated|`validateFormats|`nullable|`uniqueItems|Unions must|Enum must|Key must|Not must|AnyOf|OneOf|AllOf|Property )",
+        "^(?:IPv4|IPv6|ISO (?:date|datetime|duration|time)|MAC address|E\\.164|email address|credit card number|hostname|protocol|url|date|time)$",
+        "^(?:must NOT|must be|must have|must match|must contain|should NOT|\\$data|\\{limit:)",
+        "^(?:I/O ready|User-defined signal|invalid request|timeout exceeded|timeout of |call\\\\n|event\\\\n)",
+        "^\"[A-Za-z_]+\" (?:keyword|is|was|can)|^Bearer |^policyHelpers\\.|^DelayedStream|^[A-Za-z][A-Za-z0-9]*#[A-Za-z]",
+        "^(?:globalThis\\.|await import|const |let |var |function |import |export )"
+      ]
+    },
+    {
+      "id": "editor-setting-text",
+      "label": "内嵌 Monaco/VS Code 编辑器的命令名与设置项说明",
+      "reason": "差异预览里嵌入的编辑器组件文案（Transform to…、Indent Using…、Inlay hints…、Tab Size…）。",
+      "patterns": [
+        "^(?:Transform to|Indent (?:Line|Using)|Outdent Line|Reindent |Trim Trailing Whitespace|Transpose |Shrink Selection|Set Selection Anchor|Selection Anchor|Quick Fix|Auto Fix|Fix All|Organize Imports|Go To (?:Top|Bottom) Hover|Page (?:Up|Down) Hover|Cursor (?:Redo|Undo)|Focus (?:Next|Previous) Cursor|Change (?:All Occurrences|Tab Display Size|the space size)|(?:Current|Configured|Default) Tab Size|Detect(?:ed)? Indentation|Developer:|More Actions|Exit Compare Move|Follow link|Enable/disable |Enables |Configures |Filter (?:elements|keyboard)|Highlight (?:elements|keyboard)|Inlay hints|This setting does not support|Lines will (?:never )?wrap|A multiplier to be used|Scrolling speed multiplier|Maps to `|The (?:opening|closing) bracket character|Do not apply the returned|A command that returns information about context keys|Invalid tree location)",
+        "^(?:Co&&|Cu&&|Mo&&|A&&dd|Next &&|Previous &&)",
+        "^(?:Ctrl\\+(?:Alt|Option)|InPlaceReplaceAction)",
+        "^(?:Use |Smooth caret|Word breaks|Spaces and tabs|Special handling|The number of spaces a tab|Turn on/off use of tab key|Unusual line terminators|Renaming |Successfully renamed|Simple keyboard navigation|Use fuzzy matching|Use contiguous matching|Mouse Over|Vertical size|Source Action|Surround With|Switch Side|Unusual Line Terminators|No code actions available|Preview selected action|Default Language Configuration Overrides|Detected unusual line terminators|Convert Indentation|(?:Increase|Decrease) Editor Font Size|alwaysShowFoldIcons|No newer version)",
+        "^(?:alt \\+ click|cmd \\+ click|ctrl \\+ click|ctrl esc|div@)",
+        "^(?:end [a-z]+|await import|const newResult|default\\\\\": |\\[\\$\\{this\\.|Provider: |at \\$\\{|built-in extension)"
+      ]
+    },
+    {
+      "id": "svg-css-fragments",
+      "label": "SVG 路径、CSS 值与字体名片段",
+      "reason": "图标路径数据与样式值，非文案。",
+      "patterns": [
+        "^M[0-9.\\-\\s]|^0 0 [\\d.\\s]+|^\\d+px solid|^calc\\(|^rotate\\(|^scale\\(|Segoe|viewBox|preserveAspectRatio|^DYNAMIC_|^\\$memoize|<line|<span|^#cc|^>=",
+        "^(?:xMinYMin slice|node of type |Token with |Infinite loop on byte|>= \\(|>= \\$|'wght')"
+      ]
+    },
+    {
+      "id": "model-dates",
+      "label": "模型/服务下线日期",
+      "reason": "云服务模型的下线日期标记，属数据而非界面文案。",
+      "patterns": [
+        "^(?:January|February|March|April|May|June|July|August|September|October|November|December) \\d{4}$"
+      ]
+    },
+    {
       "id": "prompt-text",
       "label": "发送给模型的提示词/协议文本",
       "reason": "这些文本是喂给模型的提示与工具协议内容，翻译会改变模型行为，因此保持英文。",

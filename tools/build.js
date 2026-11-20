@@ -16,7 +16,7 @@ const SOURCES = [
     'i18n-webview.json', 'i18n-webview-r3.json', 'i18n-webview-r4.json', 'i18n-webview-r5.json',
     'i18n-webview-r6.json', 'i18n-host.json', 'i18n-host-r2.json', 'i18n-host-r3.json',
     'i18n-host-r4.json', 'i18n-extra.json', 'i18n-delta-2.1.329.json', 'i18n-labels.json',
-    'i18n-delta-labels.json', 'i18n-tm.json',
+    'i18n-delta-labels.json', 'i18n-tm.json', 'i18n-gap-2.1.329.json', 'i18n-gap-2.1.329-b.json', 'i18n-gap-2.1.329-c.json',
 ];
 // i18n-package.json / i18n-skip.json / i18n-outofscope.json / i18n-reviewed.json 不参与精确词典合并
 

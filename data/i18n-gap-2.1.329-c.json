@@ -1,0 +1,6 @@
+{
+  " ${Gpe}) to ask again.": " ${Gpe}）以再次提问。",
+  "Further failures in this transcript rebuild are not logged": "本次会话记录重建中后续的失败将不再记录",
+  "Further message-processing failures in this process are not logged": "本进程内后续的消息处理失败将不再记录",
+  "${Yj(r,i)} at ${s}": "${Yj(r,i)}（位于 ${s}）"
+}
