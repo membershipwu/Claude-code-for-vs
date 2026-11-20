@@ -1,0 +1,13 @@
+{
+  "Claude Code ${n} exists at the configured path but failed to launch": "配置路径下的 Claude Code ${n} 存在，但启动失败",
+  "Claude Code ${n} not found at the configured path": "配置路径下未找到 Claude Code ${n}",
+  "Claude Code: every change rejected. Reject Proposed Changes or close the diff to finish.": "Claude Code：所有改动均被拒绝。请拒绝建议的更改，或关闭差异视图以结束。",
+  "Claude Code: every change reviewed. Accept Proposed Changes to apply them.": "Claude Code：所有改动均已审核。请接受建议的更改以应用它们。",
+  "Claude Code: no change at the cursor.": "Claude Code：光标处没有改动。",
+  "Claude Code: that change was edited before it could be decided. Try again.": "Claude Code：该改动在被处理前已被编辑。请重试。",
+  "Error reading session ${e}: ${s}": "读取会话出错：${e}：${s}",
+  "Failed to rename session tab: ${o}": "重命名会话标签页失败：${o}",
+  "Teleport failed for session ${e} after ${Date.now()-n}ms: ${r}": "会话 ${e} 传送失败（耗时 ${Date.now()-n} 毫秒）：${r}",
+  "[MCP Management] ${n?\"Enabling\":\"Disabling\"} server: ${t}": "[MCP 管理] 正在${n?\"启用\":\"禁用\"}服务器：${t}",
+  "this VS Code build does not report a window session ID, so an extension restart cannot be told apart from a window reload": "此 VS Code 版本不报告窗口会话 ID，因此无法区分「扩展重启」与「窗口重新加载」"
+}

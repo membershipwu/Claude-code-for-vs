@@ -1,0 +1,107 @@
+{
+  "_doc": "范围外登记：这些字符串不属于 Claude Code 的界面文案（内嵌 Monaco/VS Code 编辑器组件、KaTeX 词法组件、协议文本或内部标识），本汉化包不处理，理由逐类登记。",
+  "categories": [
+    {
+      "id": "monaco-ui",
+      "label": "内嵌 Monaco/VS Code 编辑器组件的界面文案",
+      "reason": "Claude 的 Webview 内嵌了 Monaco 编辑器（差异预览）。这些是编辑器自身的菜单、命令与设置说明，属第三方组件文案，不属 Claude 界面。",
+      "patterns": [
+        "^(?:Show|Hide|Toggle|Go to|Open|Close|Select|Move|Scroll|Reveal|Accept|Jump|Add|Remove|Insert|Undo|Redo|Copy|Paste|Cut|Find|Replace|Trigger|Expand|Collapse|Fold|Unfold|Peek|Format|Sort|Split|Join|Run|Start|Stop|Restart|Create|Delete|Duplicate|Rename|Save|Clear|Reset|Cancel|Confirm|Apply|Enable|Disable|Always|Never) ",
+        "^(?:Whether|When enabled,|Uses the|Defines |Controls |Determines |Configure |Specifies |Maximum |Minimum |Timeout |Lines above|Tokenization |Line decoration|The (?:active |background |border |foreground )?color|This is the ARIA|If the diff|Editor )",
+        "^(?:editor|diff|workbench|terminal|files|search|window|explorer|list|tree|quick|scm|debug|notebook|testing|inline|suggest|bracket|sticky|minimap|gutter|breadcrumb|hover|accessib|untitled)\\b",
+        "\\beditor\\b|\\bpeek\\b|\\bsticky scroll\\b|\\bbracket pair\\b|\\bsuggest widget\\b|\\boverview ruler\\b|\\bword wrap\\b|\\bcode action\\b|\\binline hint\\b|\\bsemantic token\\b|\\btoken color\\b|\\bminimap\\b|\\bgutter\\b|\\bbreadcrumb\\b",
+        "^(?:config|editor|diff|workbench|folding|outline|indentation|forceRetokenize|isInDiff|unusualLine|diffAlgorithm|diffEditor|confirmDifferentSource|mcpStatus)[.\\w]*$",
+        "^&&",
+        "^(?:wordWrapColumn|bounded|ctrlCmd|cursor|enumItemLabels)$"
+      ]
+    },
+    {
+      "id": "katex",
+      "label": "KaTeX 数学排版组件的词法/CLI 文案",
+      "reason": "KaTeX 用于渲染数学公式，其报错与 CLI 选项不会出现在 Claude 对话界面中。",
+      "patterns": [
+        "^(?:-{1,2}[a-zA-Z]|@|\\.\\w)",
+        "math mode|LaTeX|KaTeX|macro expansions?|\\\\\\\\[a-zA-Z]+\\{",
+        "\\bin rule: |\\bmust be (?:a string|an array|an object)",
+        "^(?:a |an )?(?:'token'|'brackets'|style file|tag \")",
+        "^(?:Invalid token|Unexpected token|Illegal value for token|Duplicate schema id)",
+        "^(?:Render |Limit the number of macro|Turn on strict)"
+      ]
+    },
+    {
+      "id": "vscode-i18n-notes",
+      "label": "VS Code 本地化说明（写给翻译者的注释）",
+      "reason": "这些字符串本身就是给本地化人员的说明（“不要本地化”之类），不是界面文案。",
+      "patterns": [
+        "should not be localized|can be localized|refer to values the (?:different )?setting|viewport means the edge"
+      ]
+    },
+    {
+      "id": "css-and-values",
+      "label": "CSS 类名、尺寸与颜色值",
+      "reason": "样式类名与数值，非文案。",
+      "patterns": [
+        "^[#.]?[0-9a-fA-F]{3,8}$",
+        "\\$\\{[^}]*\\}px|^\\d+px$",
+        "^[a-z][a-zA-Z0-9]*_[A-Za-z0-9_\\-]{4,}$",
+        "monaco-component|diff-review|colorpicker-color-decoration|:focus-visible|^@browser:",
+        "^\\+?\\s*\\$\\{[^}]*\\}\\s*-?name$|^\\$\\{[^}]*\\}-value$|^\\$\\{[^}]*\\}-section-\\$\\{[^}]*\\}$"
+      ]
+    },
+    {
+      "id": "internal-ids",
+      "label": "内部标识符、上下文键与状态键",
+      "reason": "代码内部使用的键名/ID，不是展示文案。",
+      "patterns": [
+        "^(?:plugin-option-|plugin:|mcpStatus_|hook-field-|claude-vscode-startup-announcement)",
+        "^[a-z][a-zA-Z0-9]*\\.[a-zA-Z0-9.]+$",
+        "^[A-Za-z][A-Za-z0-9]*_[A-Za-z0-9_\\-]+$",
+        "^[a-z]+(?:[A-Z][a-zA-Z0-9]*)+$",
+        "^(?:\\|)?[a-zA-Z][a-zA-Z0-9]*$",
+        "^\\$\\{[^}]*\\}-[a-z]+$",
+        "^\\$\\{[^}]*\\}$",
+        "^\\$\\{[^}]*\\}:\\$\\{[^}]*\\}.*$",
+        "^(?:Otherwise they are|currentMove)$"
+      ]
+    },
+    {
+      "id": "schema-docs",
+      "label": "设置/插件清单的架构说明文本（zod describe）",
+      "reason": "这些是 .claude/settings.json 与插件清单字段的 JSON-Schema 说明，用于编辑器悬停文档与内部校验提示，属开发文档面而非扩展界面；其对应静态文档 claude-code-settings.schema.json 亦未本地化。",
+      "patterns": [
+        "^(?:\\(?e\\.g\\.|defaults —|hostnames seen|this session matches any pattern)",
+        "must be valid identifiers|is not offered until Claude Code is updated|hooks\\.json `surface` is gone"
+      ]
+    },
+    {
+      "id": "command-ids",
+      "label": "命令 ID",
+      "reason": "命令标识符，不是展示文案。",
+      "patterns": [
+        "^(?:claude-vscode|claude-code)\\.[A-Za-z0-9]+$",
+        "^sandbox\\.|^config\\."
+      ]
+    },
+    {
+      "id": "host-resources",
+      "label": "URL、路径、模型 ID 与内部键路径",
+      "reason": "接口地址、文件路径、模型标识符与配置键路径，均非展示文案。",
+      "patterns": [
+        "^(?:https?:|/|us\\.anthropic|urn:|claude-[a-z0-9.\\-]+@|marketplace-|enabledPlugins|managedMcpServers|modelPricing|hooks\\.|permissions\\.|\\$\\{[^}]*\\}(?:\\.|/|\\?))",
+        "^(?:\\$\\{[^}]*\\})+(?:\\.|/|#|\\?)",
+        "^\\$\\{[^}]*\\}[\\w./#{}$?-]*$",
+        "^[a-z]+\\.\\$?\\{[^}]*\\}[\\w.]*$",
+        "^codicon-|^key:\\$\\{",
+        "^(?:Activation failure telemetry|Hand-maintained baked-in model catalog)"
+      ]
+    },
+    {
+      "id": "prompt-text",
+      "label": "发送给模型的提示词/协议文本",
+      "reason": "这些文本是喂给模型的提示与工具协议内容，翻译会改变模型行为，因此保持英文。",
+      "patterns": [
+        "^#\\s|You have access to|mcp__|The user(?:'s| has| selected)|Your task is|Follow these guidelines|After completing your current task|This message was delivered by your host|^Note: The user|system-reminder"
+      ]
+    }
+  ]
+}

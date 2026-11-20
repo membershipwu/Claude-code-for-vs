@@ -1,0 +1,65 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 重建词典并做健全性检查
+        run: |
+          node tools/build.js
+          node -e "
+            const d=require('./data/merged-dict.json');
+            const n=Object.keys(d).length;
+            console.log('词典条目:', n);
+            if (n < 2000) { console.error('词典条目异常偏少，疑似构建失败'); process.exit(1); }
+            for (const [k,v] of Object.entries(d)) {
+              if (typeof v !== 'string' || !v) { console.error('异常词条:', k); process.exit(1); }
+              if (k === v) { console.error('空词条:', k); process.exit(1); }
+            }
+            console.log('词典校验通过');
+          "
+
+      - name: 冒烟：模块可加载、扩展清单合法
+        run: |
+          node -e "require('./lib/planner'); require('./lib/engine'); require('./lib/lexer'); console.log('lib 加载正常')"
+          node -e "
+            const p=require('./package.json');
+            if (!p.main || !p.contributes || !p.contributes.commands) { console.error('扩展清单不完整'); process.exit(1); }
+            console.log('扩展清单正常，命令数:', p.contributes.commands.length);
+          "
+
+      - name: 打包 VSIX
+        run: npx --yes @vscode/vsce@^3 package --no-dependencies --out claude-code-zhcn.vsix
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-code-zhcn-vsix
+          path: claude-code-zhcn.vsix
+
+      - name: 附加到 Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: claude-code-zhcn.vsix
+          generate_release_notes: true
+
+  # 说明：本项目不提供"在 CI 里跑 selftest"的步骤。
+  # selftest 需要真实安装的 Claude Code 扩展与英文原文，只能在贡献者本机执行：
+  #   node tools/selftest.js
+  # 发布前请在本地跑通并附上输出。

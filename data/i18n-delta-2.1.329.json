@@ -1,0 +1,18 @@
+{
+  "${cv(l.map(n.plugin))} ${c?\"needs\":\"need\"} this plugin. Turn ${c?cv(l.map(n.plugin)):\"them\"} off too?": "${cv(l.map(n.plugin))} 需要此插件。是否也一并关闭？",
+  "${cv(t.map(n.plugin))} ${i?\"wasn't\":\"weren't\"} changed. ${e.message}": "${cv(t.map(n.plugin))} 未发生变更。${e.message}",
+  "Settings file failed to parse: ${Ah[0]?.file??\"unknown\"} — ${Ah[0]?.message}${Al>1?` (+${Al-1} more ${Al===2?\"file\":\"files\"})`:\"\"}. Permission rules and other settings from ${Al>1?\"these files\":\"this file\"} are not in effect.": "设置文件解析失败：${Ah[0]?.file??\"未知\"} — ${Ah[0]?.message}${Al>1?`（另有 ${Al-1} 个文件）`:`\"\"`}。来自该文件的权限规则与其他设置目前均未生效。",
+  "This usually also uninstalls ${o===1?\"its installed plugin\":`its ${o} installed plugins`}, ${cv(t)}, and deletes what ${o===1?\"it\":\"they\"} saved.": "这通常还会卸载${o===1?\"它已安装的插件\":`它的 ${o} 个已安装插件`}（${cv(t)}），并删除它们保存的数据。",
+  "Asks Claude to share its plan and wait on multi-file or risky work": "让 Claude 先说明计划，并在涉及多文件或高风险工作时先等你确认",
+  "Asks Claude to stop after each step and show you the change": "让 Claude 每完成一步就停下并把改动给你看",
+  "Let Claude work on its own": "让 Claude 自行推进",
+  "Only if your administrators manage Claude Code in Anthropic's Enterprise Admin Console.": "仅当你的管理员在 Anthropic 企业管理员控制台中管理 Claude Code 时才需要。",
+  "Sign in to your organization": "登录你的组织",
+  "Sign in to your organization to apply its Claude Code settings here. You need this only if your administrators manage Claude Code in Anthropic's Enterprise Admin Console. This is an organization sign-in, not a claude.ai login. Your organization can set up a cloud provider connection. If it has one, Claude Code may use it instead of your own.": "登录你的组织，以便在此应用组织下发的 Claude Code 设置。仅当你的管理员在 Anthropic 企业管理员控制台中管理 Claude Code 时才需要这样做。这是组织登录，不是 claude.ai 登录。你的组织可以配置云服务商连接；若已配置，Claude Code 可能会使用它而不是你自己的。",
+  "That's 5 sessions. Claude will check in less from now on.": "已达 5 个会话。此后 Claude 会减少主动询问。",
+  "That's 5 sessions. Claude will explain less from now on.": "已达 5 个会话。此后 Claude 会减少解释。",
+  "View and manage this session's background work": "查看并管理此会话的后台工作",
+  "Why Claude Code asks": "Claude Code 为什么会询问",
+  "\"hooks\" is written as nested arrays and holds ${s===1?\"a value\":`${s} values`} more than ${FM} levels deep that ${s===1?\"was\":\"were\"} left out — ${fp}. Write \"hooks\" as an object of event names.": "\"hooks\" 被写成了嵌套数组，其中有超过 ${FM} 层深的值未被处理 — ${fp}。请把 \"hooks\" 写成以事件名为键的对象。",
+  "Claude Code did not finish starting: ${i} SessionStart or Setup ${Om(i,\"hook\")} had not finished (a background hook counts as not finished until it ends). Check your hooks first, then your sign-in and network. The output logs (\"View output logs\") show more.": "Claude Code 未能完成启动：${i} 个 SessionStart 或 Setup hook 尚未结束（后台 hook 在结束前都算未完成）。请先检查你的 hook，再检查登录与网络。「查看输出日志」可看到更多信息。"
+}

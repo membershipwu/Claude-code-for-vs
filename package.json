@@ -1,0 +1,57 @@
+{
+  "name": "claude-code-zhcn",
+  "displayName": "Claude Code 简体中文汉化（全量）",
+  "description": "为 Claude Code for VS Code 提供全量简体中文汉化：自动识别已安装版本、按版本隔离的英文快照、一键应用与还原。",
+  "version": "2.0.0",
+  "publisher": "xiaohan-workspace",
+  "license": "MIT",
+  "author": { "name": "xiaohan-workspace" },
+  "repository": { "type": "git", "url": "https://github.com/xiaohan-workspace/claude-code-zhcn.git" },
+  "bugs": { "url": "https://github.com/xiaohan-workspace/claude-code-zhcn/issues" },
+  "homepage": "https://github.com/xiaohan-workspace/claude-code-zhcn#readme",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other", "Language Packs"],
+  "keywords": ["claude", "claude code", "anthropic", "中文", "汉化", "简体中文", "i18n", "localization"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "claudeCodeZhcn.apply", "title": "应用汉化", "category": "Claude Code 汉化" },
+      { "command": "claudeCodeZhcn.restore", "title": "还原英文原版", "category": "Claude Code 汉化" },
+      { "command": "claudeCodeZhcn.status", "title": "检查状态", "category": "Claude Code 汉化" },
+      { "command": "claudeCodeZhcn.resetSnapshot", "title": "重置英文快照（扩展升级后使用）", "category": "Claude Code 汉化" },
+      { "command": "claudeCodeZhcn.openReport", "title": "打开汉化报告", "category": "Claude Code 汉化" },
+      { "command": "claudeCodeZhcn.openSettings", "title": "打开设置", "category": "Claude Code 汉化" }
+    ],
+    "configuration": {
+      "title": "Claude Code 汉化",
+      "properties": {
+        "claudeCodeZhcn.checkOnStartup": {
+          "type": "boolean",
+          "default": true,
+          "description": "启动时检查 Claude Code 版本：若发现版本变化或汉化未应用，在状态栏提示（不会自动改写文件）。"
+        },
+        "claudeCodeZhcn.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "在状态栏显示 Claude Code 汉化状态。"
+        },
+        "claudeCodeZhcn.notifyOnApply": {
+          "type": "boolean",
+          "default": true,
+          "description": "应用或还原完成后弹出通知，并提供“立即重新加载窗口”按钮。"
+        },
+        "claudeCodeZhcn.claudeCodeExtensionId": {
+          "type": "string",
+          "default": "Anthropic.claude-code",
+          "description": "Claude Code 扩展 ID（用于定位安装目录）。"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node tools/build.js",
+    "verify": "node tools/verify.js",
+    "package": "vsce package --no-dependencies"
+  }
+}

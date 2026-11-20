@@ -1,0 +1,12 @@
+{
+  "(MCP)": "（MCP）",
+  "${jD.basename(e)} was not started because Claude Code was exiting; try again after it restarts": "${jD.basename(e)} 未启动，因为 Claude Code 正在退出；请在其重启后重试",
+  "CLAUDE_CONFIG_DIR changed in ${e}": "${e} 中的 CLAUDE_CONFIG_DIR 已变更",
+  "Claude Code's own requests to Anthropic (token refresh, Web sessions, usage events) may fail behind a TLS-inspecting proxy.": "在启用 TLS 检查的代理后面，Claude Code 自身发往 Anthropic 的请求（令牌刷新、网页会话、用量事件）可能失败。",
+  "Invalid permission rule \"${u}\" was skipped: ${d.error}": "无效的权限规则“${u}”已跳过：${d.error}",
+  "SessionStore.append() timed out after ${this.sendTimeoutMs}ms for ${e}": "SessionStore.append() 在 ${this.sendTimeoutMs} 毫秒后仍未完成（${e}）",
+  "The Claude Code program for this computer, the ${t} build, could not be found.": "未找到适用于这台电脑的 Claude Code 程序（${t} 版本）。",
+  "a schema this tool uses is not defined yet, or a zod 3 schema is nested inside a zod 4 one. Define every schema this tool uses before passing the server to query(), startup() or setMcpServers(). Build the whole schema with zod 3 or with zod 4, not a mix of the two. A zod 4 z.lazy whose function has thrown once stays broken, so create the schema, its tool and the server again to get the tool back.": "此工具用到的某个 schema 尚未定义，或 zod 3 的 schema 被嵌进了 zod 4 的 schema 中。请在把服务器交给 query()、startup() 或 setMcpServers() 之前，先定义好该工具用到的全部 schema。整套 schema 请统一用 zod 3 或统一用 zod 4，不要混用。zod 4 的 z.lazy 一旦其函数抛过一次错就会一直失效，此时需要重新创建 schema、工具与服务器才能恢复该工具。",
+  "allowDangerouslySkipPermissions is off": "allowDangerouslySkipPermissions 当前为关闭状态",
+  "permissionMode is not a recognized mode (${typeof r})": "permissionMode 不是可识别的模式（${typeof r}）"
+}

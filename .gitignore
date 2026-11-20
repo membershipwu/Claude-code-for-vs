@@ -1,0 +1,8 @@
+node_modules/
+.cache/
+*.vsix
+.vscode-test/
+reports/
+*.log
+.DS_Store
+Thumbs.db

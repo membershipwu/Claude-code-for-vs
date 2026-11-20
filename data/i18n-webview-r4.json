@@ -1,0 +1,22 @@
+{
+  " (managed policy hooks still apply)": " （托管策略 hook 仍然生效）",
+  "${Math.round(e)}% context used — click to compact": "已使用 ${Math.round(e)}% 上下文 — 点击压缩",
+  "Branch checkout failed: ": "分支检出失败：",
+  "This plugin isn't in \"${n.marketplace(t)}\".": "此插件不在“${n.marketplace(t)}”中。",
+  "two different claude.ai accounts are in use here.": "此处正在使用两个不同的 claude.ai 账户。",
+  " Configure them in ": " 请在以下位置配置：",
+  " It cannot answer sooner: ask again after the notification that it finished.": " 它无法更早作答：请等收到完成通知后再问一次。",
+  " Set by a higher-priority configuration.": " 由更高优先级的配置设定。",
+  " to run ${i}": " 以运行 ${i}",
+  " · current": " · 当前",
+  " · switching…": " · 正在切换…",
+  "${d}: ${DU[c.state]}, locked. ${BAe[u]}": "${d}：${DU[c.state]}，已锁定。${BAe[u]}",
+  "${e.total_lines_added} ${sl(e.total_lines_added,\"line\")} added, ${e.total_lines_removed} ${sl(e.total_lines_removed,\"line\")} removed": "新增 ${e.total_lines_added} 行，删除 ${e.total_lines_removed} 行",
+  "${n} to clipboard": "${n} 已复制到剪贴板",
+  "${u} settings files": "${u} 个设置文件",
+  "${Sp(e.name)} text": "${Sp(e.name)} 文本",
+  "currentMove": "当前移动",
+  "Otherwise they are": "否则它们会被",
+  "the conversation": "该对话",
+  "not available in a cloud-hosted session": "在云端托管的会话中不可用"
+}

@@ -1,0 +1,24 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build:dict",
+      "type": "shell",
+      "command": "node tools/build.js",
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "selftest",
+      "type": "shell",
+      "command": "node tools/selftest.js",
+      "problemMatcher": []
+    },
+    {
+      "label": "audit",
+      "type": "shell",
+      "command": "node tools/audit.js",
+      "problemMatcher": []
+    }
+  ]
+}

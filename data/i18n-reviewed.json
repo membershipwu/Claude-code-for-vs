@@ -1,0 +1,20 @@
+{
+  "_doc": "人工复核通过的例外：源文案里只用于英文语法（单复数 / 主谓一致 / 单位复数形式）的插值被省略，不丢失任何展示数据。",
+  "exceptions": [
+    {
+      "from": "${e.total_lines_added} ${sl(e.total_lines_added,\"line\")} added, ${e.total_lines_removed} ${sl(e.total_lines_removed,\"line\")} removed",
+      "missing": ["sl"],
+      "reason": "sl(n,'line') 只负责英文 line/lines 单复数；中文用「行」无复数，故省略该格式化函数，两个数据均已保留。"
+    },
+    {
+      "from": "Claude Code reported ${s}, ${this.reported===1?\"which had not finished\":o===this.reported?\"none of which had finished\":`${o} of which had not finished`}, and did not answer the initialize request. A hook that runs in the background counts as not finished until it ends. Check ${this.reported===1?\"this hook\":\"these hooks\"} first, then authentication and network connectivity.",
+      "missing": ["this", "reported"],
+      "reason": "this.reported 只用于选择英文措辞（which had not finished / this hook / these hooks）；中文译文已用「其中 N 个尚未结束」「这些 hook」表达同样语义，实际数据 ${s} 与 ${o} 均已保留。"
+    },
+    {
+      "from": "Claude Code did not finish starting: ${i} SessionStart or Setup ${Lm(i,\"hook\")} had not finished (a background hook counts as not finished until it ends). Check your hooks first, then your sign-in and network. The output logs (\"View output logs\") show more.",
+      "missing": ["Lm"],
+      "reason": "Lm(i,'hook') 只负责英文 hook/hooks 单复数；中文用「个 hook」无复数，故省略该格式化函数，数量 ${i} 已保留。"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+.cache/**
+.cache
+.gitignore
+.vscode/**
+**/*.vsix
+**/*.log
+.release/**
