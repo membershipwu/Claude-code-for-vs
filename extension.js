@@ -147,10 +147,31 @@ async function resetSnapshot(context) {
 }
 
 async function openReport(context) {
-    const dir = path.join(context.extensionPath, 'docs');
-    const file = path.join(dir, '版本适配矩阵.md');
-    if (fs.existsSync(file)) await vscode.window.showTextDocument(vscode.Uri.file(file), { preview: true });
-    else vscode.window.showWarningMessage('未找到版本适配矩阵文档。');
+    // 文档不随 VSIX 分发（仅随源码）；没有文档时直接展示版本适配矩阵的内容
+    const file = path.join(context.extensionPath, 'docs', '版本适配矩阵.md');
+    if (fs.existsSync(file)) {
+        await vscode.window.showTextDocument(vscode.Uri.file(file), { preview: true });
+        return;
+    }
+    let versions = {};
+    try {
+        const raw = JSON.parse(fs.readFileSync(path.join(context.extensionPath, 'data', 'versions.json'), 'utf8'));
+        versions = raw.versions || {};
+    } catch (e) { versions = {}; }
+    const rows = Object.entries(versions)
+        .sort()
+        .reverse()
+        .map(([v, info]) => `${v}  ${info.status === 'verified' ? '✅ 已实测' : info.status === 'broken' ? '⛔ 不兼容' : '⚠️ 未测试'}  ${info.since || ''}`);
+    const s = lastStatus || makeEngine(context).status();
+    vscode.window.showInformationMessage(
+        [
+            `版本适配矩阵（当前已安装 ${s.version}）`,
+            ...rows,
+            '',
+            '完整矩阵与适配方法见仓库 docs/版本适配矩阵.md',
+        ].join('\n'),
+        { modal: true }
+    );
 }
 
 function activate(context) {

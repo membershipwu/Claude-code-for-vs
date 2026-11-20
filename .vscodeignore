@@ -1,7 +1,14 @@
 .cache/**
 .cache
 .gitignore
+.gitattributes
+.git/**
+.github/**
 .vscode/**
 **/*.vsix
 **/*.log
-.release/**
+*.txt
+tools/**
+docs/**
+CHANGELOG.md
+CONTRIBUTING.md
