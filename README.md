@@ -123,7 +123,9 @@ Claude Code 升级后，本扩展不会自动改写文件（避免在你不知�
 ```bash
 # 1. 看差距：列出新版本里仍未汉化的 Claude 界面文案
 node tools/cli.js reset          # 丢弃旧快照
-node tools/audit.js              # 输出「仍属 Claude 界面但未翻译」清单
+node tools/gap.js                # 按界面锚点列出未译条目（不靠关键词，最准）
+node tools/gap.js --write        # 同上，并生成空译文模板 data/i18n-gap-<版本>.json
+node tools/audit.js              # 覆盖率统计：含 Claude 领域词但未译的兜底清单
 
 # 2. 把清单里的条目补进 data/i18n-webview.json（或新建 data/i18n-<版本>.json）
 #    注意：只写"文案本身"，插值保持 ${...} 原样
@@ -240,7 +242,8 @@ claude-code-zhcn/
 ├─ tools/
 │  ├─ build.js              合并词库
 │  ├─ cli.js                status / apply / restore / reset / selftest
-│  ├─ audit.js              覆盖率审计（适配新版本的主力工具）
+│  ├─ gap.js                结构性缺口：按界面锚点列出未译条目（适配新版本的主力工具）
+│  ├─ audit.js              覆盖率统计：按 Claude 领域词判断重要性
 │  ├─ selftest.js           真实安装上的回归自检（11 项断言）
 │  └─ import-tm.js          从旧开源汉化包导入翻译记忆（已执行，产物为 i18n-tm.json）
 └─ docs/
@@ -251,7 +254,8 @@ claude-code-zhcn/
 ## 贡献
 
 见 [CONTRIBUTING.md](CONTRIBUTING.md)。最缺人的地方是**新版本增量文案**的翻译与复核——
-`node tools/audit.js` 会精确告诉你缺哪些。
+`node tools/gap.js` 会按界面锚点精确告诉你缺哪些（不依赖关键词，连 `Ungrouped`
+这种不含领域词的标签也能捞出来）；`node tools/audit.js` 则给出覆盖率统计。
 
 ## 许可与免责
 
