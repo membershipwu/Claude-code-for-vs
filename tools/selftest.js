@@ -33,6 +33,10 @@ if (!info) { console.error('未找到已安装的 Claude Code 扩展。'); proce
 console.log(`目标: ${info.name}\n`);
 
 /* --- 1. 建立英文基线 --- */
+const scopeCfg = require(path.join(ROOT, 'data', 'scope.json'));
+const hostWide = !scopeCfg.host || !scopeCfg.host.allowKinds || scopeCfg.host.allowKinds.length > 1;
+const hostMin = hostWide ? 100 : 1;
+const hostCjkMin = hostWide ? 2000 : 1;
 const english = engine.englishFiles(info);
 const englishWebview = english.files.webview;
 const englishHost = english.files.host;
@@ -44,8 +48,8 @@ check('英文基线确实是英文', cjkCount(englishWebview) < 5000 && cjkCount
 /* --- 2. 应用汉化 --- */
 const a1 = engine.apply();
 const s1 = engine.status();
-check('应用后状态为「已汉化」', s1.patched, `webview ${s1.cjkWebview} / host ${s1.cjkHost} 中文字符`);
-check('应用后有实际替换', a1.webview.changed > 1000 && a1.host.changed > 100, `${a1.webview.changed} + ${a1.host.changed} 处`);
+check('应用后状态为「已汉化」', s1.patched, `webview ${s1.cjkWebview} / host ${s1.cjkHost} 中文字符（宿主范围: ${hostWide ? 'wide' : 'api-only'}）`);
+check('应用后有实际替换', a1.webview.changed > 1000 && a1.host.changed >= hostMin, `${a1.webview.changed} + ${a1.host.changed} 处`);
 check('命令标题全部中文', s1.commands.translated === s1.commands.total, `${s1.commands.translated}/${s1.commands.total}`);
 check('package.json 仍是合法 JSON', (() => { try { JSON.parse(fs.readFileSync(info.files.pkg, 'utf8')); return true; } catch (e) { return false; } })());
 check('汉化后语法可解析', (() => { try { new Function(fs.readFileSync(info.files.webview, 'utf8')); new Function(fs.readFileSync(info.files.host, 'utf8')); return true; } catch (e) { return false; } })());

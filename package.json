@@ -2,26 +2,73 @@
   "name": "claude-code-zhcn",
   "displayName": "Claude Code 简体中文汉化（全量）",
   "description": "为 Claude Code for VS Code 提供全量简体中文汉化：自动识别已安装版本、按版本隔离的英文快照、一键应用与还原。",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "publisher": "xiaohan-workspace",
   "license": "MIT",
-  "author": { "name": "xiaohan-workspace" },
-  "repository": { "type": "git", "url": "https://github.com/xiaohan-workspace/claude-code-zhcn.git" },
-  "bugs": { "url": "https://github.com/xiaohan-workspace/claude-code-zhcn/issues" },
+  "author": {
+    "name": "xiaohan-workspace"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xiaohan-workspace/claude-code-zhcn.git"
+  },
+  "bugs": {
+    "url": "https://github.com/xiaohan-workspace/claude-code-zhcn/issues"
+  },
   "homepage": "https://github.com/xiaohan-workspace/claude-code-zhcn#readme",
-  "engines": { "vscode": "^1.85.0" },
-  "categories": ["Other", "Language Packs"],
-  "keywords": ["claude", "claude code", "anthropic", "中文", "汉化", "简体中文", "i18n", "localization"],
-  "activationEvents": ["onStartupFinished"],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Language Packs"
+  ],
+  "keywords": [
+    "claude",
+    "claude code",
+    "anthropic",
+    "中文",
+    "汉化",
+    "简体中文",
+    "i18n",
+    "localization"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
-      { "command": "claudeCodeZhcn.apply", "title": "应用汉化", "category": "Claude Code 汉化" },
-      { "command": "claudeCodeZhcn.restore", "title": "还原英文原版", "category": "Claude Code 汉化" },
-      { "command": "claudeCodeZhcn.status", "title": "检查状态", "category": "Claude Code 汉化" },
-      { "command": "claudeCodeZhcn.resetSnapshot", "title": "重置英文快照（扩展升级后使用）", "category": "Claude Code 汉化" },
-      { "command": "claudeCodeZhcn.openReport", "title": "打开汉化报告", "category": "Claude Code 汉化" },
-      { "command": "claudeCodeZhcn.openSettings", "title": "打开设置", "category": "Claude Code 汉化" }
+      {
+        "command": "claudeCodeZhcn.apply",
+        "title": "应用汉化",
+        "category": "Claude Code 汉化"
+      },
+      {
+        "command": "claudeCodeZhcn.restore",
+        "title": "还原英文原版",
+        "category": "Claude Code 汉化"
+      },
+      {
+        "command": "claudeCodeZhcn.status",
+        "title": "检查状态",
+        "category": "Claude Code 汉化"
+      },
+      {
+        "command": "claudeCodeZhcn.resetSnapshot",
+        "title": "重置英文快照（扩展升级后使用）",
+        "category": "Claude Code 汉化"
+      },
+      {
+        "command": "claudeCodeZhcn.openReport",
+        "title": "打开汉化报告",
+        "category": "Claude Code 汉化"
+      },
+      {
+        "command": "claudeCodeZhcn.openSettings",
+        "title": "打开设置",
+        "category": "Claude Code 汉化"
+      }
     ],
     "configuration": {
       "title": "Claude Code 汉化",

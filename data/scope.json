@@ -1,0 +1,9 @@
+{
+  "_doc": "改写范围控制。宿主侧（extension.js）默认只用最窄的一类位置：必经 vscode API 的实参。原因是 zod 4 会在运行时用 new Function 生成校验代码，宿主文件里存在被内联进生成源码的字符串；一旦翻错，表现为扩展激活失败、面板一直转圈。webview 侧不涉及该机制，保持全类型。",
+  "webview": {
+    "allowKinds": null
+  },
+  "host": {
+    "allowKinds": ["api"]
+  }
+}
