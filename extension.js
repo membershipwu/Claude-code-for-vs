@@ -41,10 +41,11 @@ function makeEngine(context) {
 
 function statusText(s) {
     if (!s.ok) return { text: '$(globe) Claude 汉化: 未安装', tip: '未找到已安装的 Claude Code 扩展。' };
-    const mark = s.patched ? '已汉化' : '未汉化';
+    const mark = s.needsUpdate ? '有漏译，需重新应用' : s.patched ? '已汉化' : '未汉化';
     const sup = s.supported === 'verified' ? '已适配' : s.supported === 'untested' ? '未测试版本' : '未知版本';
+    const indicator = s.needsUpdate ? '待补译' : s.patched ? '✓' : '…';
     return {
-        text: `$(globe) Claude ${s.version} ${s.patched ? '✓' : '…'}`,
+        text: `$(globe) Claude ${s.version} ${indicator}`,
         tip: [
             `Claude Code 版本：${s.version}`,
             `汉化状态：${mark}`,
@@ -53,7 +54,7 @@ function statusText(s) {
             `词典条目：${s.dictSize}`,
             s.hasSnapshot ? '英文快照：已建立' : '英文快照：未建立',
             '',
-            '点击执行「检查状态」',
+            s.needsUpdate ? '漏译文案：' + s.sessionLabels.missing.join('、') + '；点击后重新应用汉化' : '点击执行「检查状态」',
         ].join('\n'),
     };
 }
@@ -72,6 +73,9 @@ function refreshStatus(context) {
     const t = statusText(s);
     statusItem.text = t.text;
     statusItem.tooltip = t.tip;
+    statusItem.backgroundColor = s.ok && (!s.patched || s.supported === 'untested')
+        ? new vscode.ThemeColor('statusBarItem.warningBackground')
+        : undefined;
     statusItem.show();
     return s;
 }
@@ -84,8 +88,14 @@ async function offerReload(msg) {
 }
 
 async function apply(context) {
-    const engine = makeEngine(context);
-    const s = engine.status();
+    let engine, s;
+    try {
+        engine = makeEngine(context);
+        s = engine.status();
+    } catch (e) {
+        vscode.window.showErrorMessage('汉化失败：' + (e && e.message || e));
+        return;
+    }
     if (!s.ok) { vscode.window.showErrorMessage('未找到已安装的 Claude Code 扩展。'); return; }
     if (s.supported === 'untested') {
         const pick = await vscode.window.showWarningMessage(
@@ -118,22 +128,36 @@ async function restore(context) {
 
 async function showStatus(context) {
     const s = refreshStatus(context);
-    if (!s || !s.ok) { vscode.window.showWarningMessage('未找到已安装的 Claude Code 扩展。'); return; }
+    if (!s || !s.ok) {
+        vscode.window.showWarningMessage(s && s.reason && s.reason !== 'not-installed'
+            ? '检查状态失败：' + s.reason
+            : '未找到已安装的 Claude Code 扩展。');
+        return;
+    }
     const action = await vscode.window.showInformationMessage(
         [
             `Claude Code ${s.version} · ${s.patched ? '已汉化' : '未汉化'}`,
             `命令标题 ${s.commands.translated}/${s.commands.total} 已中文 · 词典 ${s.dictSize} 条 · 版本适配：${s.supported}`,
             `聊天界面中文字符 ${s.cjkWebview} · 宿主界面 ${s.cjkHost}`,
+            s.needsUpdate ? '漏译文案：' + s.sessionLabels.missing.join('、') + '，请重新应用汉化。' : '',
         ].join('\n'),
-        s.patched ? '还原英文原版' : '应用汉化'
+        s.patched ? '还原英文原版' : '应用汉化',
+        ...(s.patched ? ['重新应用汉化'] : [])
     );
-    if (action === '应用汉化') await apply(context);
+    if (action === '应用汉化' || action === '重新应用汉化') await apply(context);
     if (action === '还原英文原版') await restore(context);
 }
 
 async function resetSnapshot(context) {
-    const engine = makeEngine(context);
-    const s = engine.status();
+    let engine;
+    let s;
+    try {
+        engine = makeEngine(context);
+        s = engine.status();
+    } catch (e) {
+        vscode.window.showErrorMessage('读取快照失败：' + (e && e.message || e));
+        return;
+    }
     if (!s.ok) { vscode.window.showErrorMessage('未找到已安装的 Claude Code 扩展。'); return; }
     const pick = await vscode.window.showWarningMessage(
         `将删除 ${s.version} 的英文快照。若当前文件已被汉化，下次应用会以「当前文件」为基线，导致无法还原英文。\n建议先执行「还原英文原版」。`,
@@ -141,8 +165,13 @@ async function resetSnapshot(context) {
         '我已还原，继续', '取消'
     );
     if (pick !== '我已还原，继续') return;
-    engine.dropSnapshot(s.version);
-    refreshStatus(context);
+    try {
+        engine.dropSnapshot(s.version);
+        refreshStatus(context);
+    } catch (e) {
+        vscode.window.showErrorMessage('重置快照失败：' + (e && e.message || e));
+        return;
+    }
     vscode.window.showInformationMessage(`已重置 ${s.version} 的英文快照。`);
 }
 
@@ -186,15 +215,18 @@ function activate(context) {
             vscode.commands.executeCommand('workbench.action.openSettings', 'claudeCodeZhcn'))
     );
 
-    if (cfg.get('checkOnStartup', true)) {
-        try {
-            const s = refreshStatus(context);
-            if (s && s.ok && (!s.patched || s.supported === 'untested')) {
-                // 只提示，不自动改写文件
-                statusItem && (statusItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground'));
-            }
-        } catch (e) { /* 启动期不打扰 */ }
-    }
+    // The status-bar preference controls visibility independently of startup checks.
+    try {
+        const s = cfg.get('showStatusBar', true) ? refreshStatus(context) : null;
+        if (cfg.get('checkOnStartup', true) && s && s.ok && (!s.patched || s.supported === 'untested')) {
+            statusItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+        }
+    } catch (e) { /* Startup diagnostics must never prevent extension activation. */ }
+
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration((event) => {
+        if (event.affectsConfiguration('claudeCodeZhcn.showStatusBar') ||
+            event.affectsConfiguration('claudeCodeZhcn.checkOnStartup')) refreshStatus(context);
+    }));
 }
 
 function deactivate() { }

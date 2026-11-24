@@ -33,7 +33,8 @@ function printStatus(s) {
     if (!s.ok) { console.log('未找到已安装的 Claude Code 扩展。'); return; }
     console.log('Claude Code 版本 :', s.version);
     console.log('安装目录         :', s.dir);
-    console.log('汉化状态         :', s.patched ? '已汉化 ✓' : '未汉化');
+    console.log('汉化状态         :', s.needsUpdate ? '有漏译，需重新应用汉化' : s.patched ? '已汉化 ✓' : '未汉化');
+    if (s.needsUpdate) console.log('尚未应用的翻译   :', s.sessionLabels.missing.join('、'));
     console.log('版本适配         :', s.supported);
     console.log('聊天界面中文字符 :', s.cjkWebview);
     console.log('宿主界面中文字符 :', s.cjkHost);
@@ -56,6 +57,10 @@ if (cmd === 'status') {
 } else if (cmd === 'reset') {
     const s = engine.status();
     if (!s.ok) { console.error('未找到扩展'); process.exit(1); }
+    if (s.patched) {
+        console.error('当前安装仍处于汉化状态；请先运行 restore 并确认英文原版已恢复，再删除唯一可用的英文快照。');
+        process.exit(1);
+    }
     engine.dropSnapshot(s.version);
     console.log(`已删除 ${s.version} 的英文快照。`);
 } else if (cmd === 'selftest') {

@@ -53,7 +53,8 @@ for (const [kind, key] of [['webview', 'webview'], ['host', 'host']]) {
     const src = files[key];
     if (!src) continue;
     const toks = tokenize(src).filter((t) => t.type !== 'comment');
-    const plan = planSource(toks, dict, normDict, labels);
+    const scope = engine.bundle.scope[kind];
+    const plan = planSource(toks, dict, normDict, labels, scope ? { allowKinds: scope.allowKinds } : undefined);
 
     let translated = 0, skipped = 0, outofscope = 0, pure = 0;
     const hot = [];

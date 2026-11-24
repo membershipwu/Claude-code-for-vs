@@ -1,73 +1,110 @@
-/**
- * 引擎自检：在真实安装的 Claude Code 上跑一遍
- *   英文原文 → 应用汉化 → 断言 → 还原 → 断言 → 再应用 → 断言
- * 任何一步不满足就非零退出。用于发布前回归，也用于新版本适配后的验收。
- *
- * 用法: node tools/selftest.js [--extensions-root <dir>] [--storage <dir>]
- */
+/** Exercise apply/restore on a disposable copy of the installed extension. */
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { Engine, cjkCount } = require('../lib/engine');
+const { Engine, readSnapshot, cjkCount } = require('../lib/engine');
 
 const ROOT = path.resolve(__dirname, '..');
 function arg(name, fallback) {
-    const i = process.argv.indexOf(name);
-    return i > 0 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
+    const index = process.argv.indexOf(name);
+    return index > 0 && process.argv[index + 1] ? process.argv[index + 1] : fallback;
 }
-
-const engine = new Engine({
+const sourceEngine = new Engine({
     extensionsRoot: arg('--extensions-root', path.join(os.homedir(), '.vscode', 'extensions')),
     storageDir: arg('--storage', path.join(ROOT, '.cache')),
     dataDir: path.join(ROOT, 'data'),
 });
-
-let pass = 0, fail = 0;
-function check(name, ok, detail) {
-    console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  (' + detail + ')' : ''}`);
-    ok ? pass++ : fail++;
+let pass = 0;
+let fail = 0;
+function check(name, condition, detail) {
+    console.log((condition ? 'PASS' : 'FAIL') + '  ' + name + (detail ? '  (' + detail + ')' : ''));
+    if (condition) pass++; else fail++;
 }
 
-const info = engine.installed();
-if (!info) { console.error('未找到已安装的 Claude Code 扩展。'); process.exit(2); }
-console.log(`目标: ${info.name}\n`);
+const installed = sourceEngine.installed();
+if (!installed) {
+    console.error('未找到已安装的 Claude Code 扩展。');
+    process.exit(2);
+}
 
-/* --- 1. 建立英文基线 --- */
-const scopeCfg = require(path.join(ROOT, 'data', 'scope.json'));
-const hostWide = !scopeCfg.host || !scopeCfg.host.allowKinds || scopeCfg.host.allowKinds.length > 1;
-const hostMin = hostWide ? 100 : 1;
-const hostCjkMin = hostWide ? 2000 : 1;
-const english = engine.englishFiles(info);
-const englishWebview = english.files.webview;
-const englishHost = english.files.host;
-const englishPkg = english.files.pkg;
-check('英文基线可取得', !!englishWebview && !!englishHost && !!englishPkg, `来源: ${english.from}`);
-check('英文基线确实是英文', cjkCount(englishWebview) < 5000 && cjkCount(englishHost) < 2000,
-    `webview ${cjkCount(englishWebview)} / host ${cjkCount(englishHost)} 个中文字符`);
+const snapshot = readSnapshot(sourceEngine.storageDir, installed.version);
+let english;
+if (snapshot) english = snapshot.files;
+else {
+    english = {};
+    for (const [key, file] of Object.entries(installed.files)) {
+        if (key === 'walkthroughDir') continue;
+        if (key === 'webview' || key === 'host' || key === 'pkg') english[key] = fs.readFileSync(file, 'utf8');
+    }
+    const walkthrough = fs.readdirSync(installed.files.walkthroughDir)
+        .filter((name) => name.toLowerCase().endsWith('.md')).sort();
+    for (const name of walkthrough) english['walkthrough/' + name] = fs.readFileSync(path.join(installed.files.walkthroughDir, name), 'utf8');
+    if (cjkCount(english.webview) > 5000 || cjkCount(english.host) > 2000) {
+        console.error('未找到经校验的英文快照，且当前安装含有大量中文。为避免修改真实安装，已停止自检。');
+        process.exit(2);
+    }
+}
 
-/* --- 2. 应用汉化 --- */
-const a1 = engine.apply();
-const s1 = engine.status();
-check('应用后状态为「已汉化」', s1.patched, `webview ${s1.cjkWebview} / host ${s1.cjkHost} 中文字符（宿主范围: ${hostWide ? 'wide' : 'api-only'}）`);
-check('应用后有实际替换', a1.webview.changed > 1000 && a1.host.changed >= hostMin, `${a1.webview.changed} + ${a1.host.changed} 处`);
-check('命令标题全部中文', s1.commands.translated === s1.commands.total, `${s1.commands.translated}/${s1.commands.total}`);
-check('package.json 仍是合法 JSON', (() => { try { JSON.parse(fs.readFileSync(info.files.pkg, 'utf8')); return true; } catch (e) { return false; } })());
-check('汉化后语法可解析', (() => { try { new Function(fs.readFileSync(info.files.webview, 'utf8')); new Function(fs.readFileSync(info.files.host, 'utf8')); return true; } catch (e) { return false; } })());
+const TEMP = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-code-zhcn-selftest-'));
+const extensionsRoot = path.join(TEMP, 'extensions');
+const cloneDir = path.join(extensionsRoot, installed.name);
+const storageDir = path.join(TEMP, 'storage');
+const cloneFiles = {
+    webview: path.join(cloneDir, 'webview', 'index.js'),
+    host: path.join(cloneDir, 'extension.js'),
+    pkg: path.join(cloneDir, 'package.json'),
+    walkthroughDir: path.join(cloneDir, 'resources', 'walkthrough'),
+};
+const engine = new Engine({ extensionsRoot, storageDir, dataDir: path.join(ROOT, 'data') });
 
-/* --- 3. 幂等：再应用一次结果不变 --- */
-const before = fs.readFileSync(info.files.webview, 'utf8');
-engine.apply();
-check('重复应用结果不变（幂等）', fs.readFileSync(info.files.webview, 'utf8') === before);
+function destination(key) {
+    if (key === 'webview' || key === 'host' || key === 'pkg') return cloneFiles[key];
+    if (key.startsWith('walkthrough/')) return path.join(cloneFiles.walkthroughDir, key.slice('walkthrough/'.length));
+    return null;
+}
 
-/* --- 4. 还原 --- */
-engine.restore();
-const s2 = engine.status();
-check('还原后回到英文原版', !s2.patched, `webview ${s2.cjkWebview} / host ${s2.cjkHost} 个中文字符`);
-check('还原与英文基线逐字节一致', fs.readFileSync(info.files.webview, 'utf8') === englishWebview && fs.readFileSync(info.files.host, 'utf8') === englishHost);
+try {
+    for (const [key, text] of Object.entries(english)) {
+        const file = destination(key);
+        if (!file) continue;
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        fs.writeFileSync(file, text, 'utf8');
+    }
 
-/* --- 5. 再应用（可用性收尾，停在汉化状态） --- */
-const a2 = engine.apply();
-check('还原后可再次应用', engine.status().patched, `${a2.webview.changed} + ${a2.host.changed} 处`);
+    check('validated English baseline is available', !!english.webview && !!english.host && !!english.pkg, snapshot ? 'verified snapshot' : 'English installation copy');
+    check('baseline contains no accidental localization', cjkCount(english.webview) < 5000 && cjkCount(english.host) < 2000,
+        'webview ' + cjkCount(english.webview) + ' / host ' + cjkCount(english.host) + ' CJK characters');
 
-console.log(`\n${pass} 通过 / ${fail} 失败`);
-process.exit(fail === 0 ? 0 : 1);
+    const firstApply = engine.apply();
+    const firstStatus = engine.status();
+    check('apply changes the localized webview', firstApply.webview.changed > 1000, firstApply.webview.changed + ' text edits');
+    check('apply changes safe host strings', firstApply.host.changed > 0, firstApply.host.changed + ' text edits');
+    check('all contributed command labels are localized', firstStatus.commands.translated === firstStatus.commands.total,
+        firstStatus.commands.translated + '/' + firstStatus.commands.total);
+    check('localized manifest remains valid JSON', (() => {
+        try { JSON.parse(fs.readFileSync(cloneFiles.pkg, 'utf8')); return true; } catch (e) { return false; }
+    })());
+    check('localized host and webview remain syntactically valid', (() => {
+        try { new Function(fs.readFileSync(cloneFiles.webview, 'utf8')); new Function(fs.readFileSync(cloneFiles.host, 'utf8')); return true; } catch (e) { return false; }
+    })());
+
+    const appliedFiles = Object.fromEntries(Object.keys(english).filter((key) => destination(key))
+        .map((key) => [key, fs.readFileSync(destination(key), 'utf8')]));
+    engine.apply();
+    check('repeated application is idempotent', Object.entries(appliedFiles).every(([key, text]) => fs.readFileSync(destination(key), 'utf8') === text));
+
+    engine.restore();
+    check('restore exactly reproduces the English snapshot', Object.entries(english).filter(([key]) => destination(key))
+        .every(([key, text]) => fs.readFileSync(destination(key), 'utf8') === text));
+    check('restored webview is recognized as English', !engine.status().patched);
+
+    const secondApply = engine.apply();
+    check('a second apply succeeds after restoring the snapshot', secondApply.webview.changed > 1000 && secondApply.host.changed > 0);
+} catch (error) {
+    check('selftest completed without errors', false, String(error && error.stack || error));
+} finally {
+    fs.rmSync(TEMP, { recursive: true, force: true });
+}
+
+console.log('\n' + pass + ' passed / ' + fail + ' failed. All writes were limited to a temporary extension copy.');
+process.exitCode = fail === 0 ? 0 : 1;

@@ -1,100 +1,160 @@
-/**
- * 扩展入口的无人值守冒烟：用 vscode 桩件加载 extension.js，跑 activate()，
- * 断言命令注册、状态栏刷新、状态查询都正常。用于发布前检查"扩展本身会不会崩"。
- *
- * 用法: node tools/extension-smoke.js
- */
+/** End-to-end smoke of our VS Code extension against an isolated fake install. */
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const Module = require('module');
 
 const ROOT = path.resolve(__dirname, '..');
-const STORAGE = path.join(ROOT, '.cache');
+const { Engine, writeSnapshot } = require('../lib/engine');
+const TEMP = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-code-zhcn-smoke-'));
+const extensionsRoot = path.join(TEMP, 'extensions');
+const extensionDir = path.join(extensionsRoot, 'anthropic.claude-code-2.1.329-win32-x64');
+const walkthroughDir = path.join(extensionDir, 'resources', 'walkthrough');
+const storageDir = path.join(TEMP, 'storage');
+const files = {
+    webview: path.join(extensionDir, 'webview', 'index.js'),
+    host: path.join(extensionDir, 'extension.js'),
+    pkg: path.join(extensionDir, 'package.json'),
+};
 
-// ---- vscode 桩件 ----
-function makeVscode() {
+function writeFixture() {
+    fs.mkdirSync(path.dirname(files.webview), { recursive: true });
+    fs.mkdirSync(walkthroughDir, { recursive: true });
+    fs.mkdirSync(storageDir, { recursive: true });
+    const source = {
+        webview: '/* ' + '汉'.repeat(5100) + ' */\nconst view={title:"Cancel",label:"Ungrouped"};const filter={needs_input:"Needs input",working:"Working",completed:"Completed"};',
+        host: 'function notify(){return vscode.window.showInformationMessage("Cancel")}',
+        pkg: JSON.stringify({
+            displayName: 'Claude Code for VS Code',
+            description: 'Claude Code for VS Code: Harness the power of Claude Code without leaving your IDE',
+            contributes: { commands: [{ command: 'claude-vscode.newConversation', title: 'Claude Code: New Conversation' }] },
+        }, null, 2) + '\n',
+    };
+    fs.writeFileSync(files.webview, source.webview);
+    fs.writeFileSync(files.host, source.host);
+    fs.writeFileSync(files.pkg, source.pkg);
+    writeSnapshot(storageDir, '2.1.329', source);
+}
+
+function makeVscode(overrides = {}) {
     const commands = new Map();
     const created = [];
+    const informationMessages = [];
+    const configuration = Object.assign({ checkOnStartup: true, showStatusBar: true, notifyOnApply: true }, overrides);
+    let onConfigurationChange = null;
     class ThemeColor { constructor(id) { this.id = id; } }
     class Uri {
-        constructor(p) { this.fsPath = p; this.path = p; this.scheme = 'file'; }
-        static file(p) { return new Uri(p); }
-        toString() { return this.fsPath; }
+        constructor(filePath) { this.fsPath = filePath; this.path = filePath; this.scheme = 'file'; }
+        static file(filePath) { return new Uri(filePath); }
     }
-    const statusBarItem = () => ({
-        text: '', tooltip: '', command: '', backgroundColor: null,
-        show() { this._shown = true; }, hide() { this._shown = false; }, dispose() { },
-    });
     const vscode = {
         StatusBarAlignment: { Left: 1, Right: 2 },
         ProgressLocation: { Notification: 15, Window: 10, SourceControl: 1 },
         ThemeColor,
         Uri,
         window: {
-            createStatusBarItem() { const i = statusBarItem(); created.push(i); return i; },
-            showInformationMessage: async () => undefined,
+            createStatusBarItem() {
+                const item = {
+                    text: '', tooltip: '', command: '', backgroundColor: null,
+                    show() { this._shown = true; }, hide() { this._shown = false; }, dispose() {},
+                };
+                created.push(item);
+                return item;
+            },
+            showInformationMessage: async (...args) => { informationMessages.push(args); return undefined; },
             showWarningMessage: async () => undefined,
-            showErrorMessage: (m) => { console.error('[showErrorMessage]', m); },
+            showErrorMessage(message) { throw new Error('unexpected VS Code error notification: ' + message); },
             showTextDocument: async () => undefined,
-            withProgress: async (_opts, task) => task({ report() { } }, { isCancellationRequested: false }),
+            withProgress: async (_options, callback) => callback({ report() {} }, { isCancellationRequested: false }),
         },
         commands: {
-            registerCommand(id, fn) { commands.set(id, fn); return { dispose() { } }; },
+            registerCommand(id, callback) { commands.set(id, callback); return { dispose() {} }; },
             executeCommand: async () => undefined,
         },
         workspace: {
-            getConfiguration: () => ({ get: (k, d) => d }),
+            getConfiguration: () => ({ get: (key, fallback) => Object.prototype.hasOwnProperty.call(configuration, key) ? configuration[key] : fallback }),
+            onDidChangeConfiguration(callback) { onConfigurationChange = callback; return { dispose() {} }; },
         },
         extensions: {
-            getExtension: (id) => {
-                // 让扩展能找到真实的 Claude Code 目录
-                const root = path.join(os.homedir(), '.vscode', 'extensions');
-                const dirs = fs.existsSync(root) ? fs.readdirSync(root).filter((n) => /^anthropic\.claude-code-/i.test(n)) : [];
-                if (!dirs.length) return undefined;
-                dirs.sort();
-                return { extensionPath: path.join(root, dirs[dirs.length - 1]) };
+            getExtension(id) {
+                return id.toLowerCase() === 'anthropic.claude-code'
+                    ? { extensionPath: extensionDir, packageJSON: { version: '2.1.329' } }
+                    : undefined;
             },
         },
     };
-    return { vscode, commands, created };
+    return {
+        vscode, commands, created, informationMessages,
+        setConfiguration(key, value) {
+            configuration[key] = value;
+            onConfigurationChange({ affectsConfiguration(name) { return name === 'claudeCodeZhcn.' + key; } });
+        },
+    };
 }
 
-const { vscode, commands, created } = makeVscode();
-const Module = require('module');
-const origLoad = Module._load;
-Module._load = function (request, parent, isMain) {
-    if (request === 'vscode') return vscode;
-    return origLoad.apply(this, arguments);
-};
-
-let pass = 0, fail = 0;
-const check = (name, ok, detail) => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  (' + detail + ')' : ''}`); ok ? pass++ : fail++; };
-
-(async () => {
-    const ext = require(path.join(ROOT, 'extension.js'));
-    check('extension.js 可加载', typeof ext.activate === 'function' && typeof ext.deactivate === 'function');
-
-    const context = {
-        subscriptions: [],
-        extensionPath: ROOT,
-        globalStorageUri: vscode.Uri.file(STORAGE),
+async function main() {
+    writeFixture();
+    const { vscode, commands, created, setConfiguration, informationMessages } = makeVscode({ checkOnStartup: false });
+    const previousLoad = Module._load;
+    const messages = [];
+    let checks = 0;
+    const check = (name, condition, detail) => {
+        checks++;
+        console.log((condition ? 'PASS' : 'FAIL') + '  ' + name + (detail ? '  (' + detail + ')' : ''));
+        if (!condition) messages.push(name);
     };
-    ext.activate(context);
-    check('activate 不抛错', true);
-    check('6 条命令已注册', commands.size === 6, [...commands.keys()].join(','));
-    check('状态栏条目已创建', created.length >= 1);
-    check('状态栏文本已写入', !!(created[0] && created[0].text), created[0] && created[0].text);
-    check('设置了状态栏命令', created[0] && created[0].command === 'claudeCodeZhcn.status');
 
-    // 调用「检查状态」命令，确保整条链路可跑
+    Module._load = function (request, parent, isMain) {
+        if (request === 'vscode') return vscode;
+        return previousLoad.call(this, request, parent, isMain);
+    };
     try {
+        const entryPath = path.join(ROOT, 'extension.js');
+        delete require.cache[require.resolve(entryPath)];
+        const extension = require(entryPath);
+        check('extension entry point loads', typeof extension.activate === 'function' && typeof extension.deactivate === 'function');
+        const context = { subscriptions: [], extensionPath: ROOT, globalStorageUri: vscode.Uri.file(storageDir) };
+        extension.activate(context);
+        check('activate completes and registers every command', commands.size === 6, [...commands.keys()].join(', '));
+        check('status-bar entry stays visible when startup checks are disabled', created[0] && created[0]._shown);
+
+        setConfiguration('showStatusBar', false);
+        check('status-bar setting hides the entry immediately', created[0] && !created[0]._shown);
+        setConfiguration('showStatusBar', true);
+        check('status-bar setting restores the entry immediately', created[0] && created[0]._shown);
+
+        await commands.get('claudeCodeZhcn.apply')();
+        const engine = new Engine({ extensionsRoot, storageDir, dataDir: path.join(ROOT, 'data') });
+        check('apply command translates the isolated installation', engine.status().patched);
+        check('apply updates the status-bar label', !!(created[0] && created[0].text.includes('✓')));
+
+        fs.writeFileSync(files.webview, fs.readFileSync(files.webview, 'utf8').replace('completed:"已完成"', 'completed:"Completed"'));
         await commands.get('claudeCodeZhcn.status')();
-        check('「检查状态」命令可执行', true);
-    } catch (e) {
-        check('「检查状态」命令可执行', false, String(e && e.message || e));
+        check('an older localized file is shown as needing translation', created[0].text.includes('待补译') && !created[0].text.includes('✓'));
+        const prompt = informationMessages.at(-1);
+        check('status offers application when a label is missing', prompt[0].includes('Completed') && prompt.includes('应用汉化'));
+        await commands.get('claudeCodeZhcn.apply')();
+        check('reapplication fixes the actual installation label', fs.readFileSync(files.webview, 'utf8').includes('completed:"已完成"') && engine.status().patched);
+
+        await commands.get('claudeCodeZhcn.restore')();
+        check('restore command restores all installation files', !engine.status().patched);
+        await commands.get('claudeCodeZhcn.status')();
+        check('status command executes', true);
+
+        extension.deactivate();
+        check('extension context subscriptions are disposable', context.subscriptions.every((item) => typeof item.dispose === 'function'));
+    } finally {
+        Module._load = previousLoad;
+        delete require.cache[require.resolve(path.join(ROOT, 'extension.js'))];
+        fs.rmSync(TEMP, { recursive: true, force: true });
     }
 
-    ext.deactivate();
-    console.log(`\n${pass} 通过 / ${fail} 失败`);
-    process.exit(fail === 0 ? 0 : 1);
-})();
+    console.log('\n' + (checks - messages.length) + ' checks passed; ' + messages.length + ' failed.');
+    if (messages.length) process.exitCode = 1;
+}
+
+main().catch((error) => {
+    console.error(error && error.stack || error);
+    fs.rmSync(TEMP, { recursive: true, force: true });
+    process.exitCode = 1;
+});

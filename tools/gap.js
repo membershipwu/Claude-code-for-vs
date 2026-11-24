@@ -29,6 +29,7 @@ function arg(name, fallback) {
 }
 const asJson = process.argv.includes('--json');
 const doWrite = process.argv.includes('--write');
+const forceWrite = process.argv.includes('--force');
 const onlyKind = arg('--kind', null);
 
 const engine = new Engine({
@@ -59,7 +60,8 @@ for (const kind of ['webview', 'host']) {
     const src = files[kind];
     if (!src) continue;
     const toks = tokenize(src).filter((t) => t.type !== 'comment');
-    const plan = planSource(toks, dict, normDict, labels);
+    const scope = engine.bundle.scope[kind];
+    const plan = planSource(toks, dict, normDict, labels, scope ? { allowKinds: scope.allowKinds } : undefined);
 
     const gaps = [];
     const skipped = { registered: 0, outOfScope: 0, pureData: 0 };
@@ -94,6 +96,10 @@ if (asJson) {
 }
 
 if (doWrite) {
+    if (fs.existsSync(path.join(ROOT, 'data', 'i18n-gap-' + info.version + '.json')) && !forceWrite) {
+        console.error('拒绝覆盖已有的译文文件：i18n-gap-' + info.version + '.json。请先备份原文件，或明确传入 --force。');
+        process.exit(2);
+    }
     const out = path.join(ROOT, 'data', `i18n-gap-${info.version}.json`);
     fs.writeFileSync(out, JSON.stringify(template, null, 2), 'utf8');
     console.log(`已写出模板（译文留空，填好后加入 tools/build.js 的 SOURCES）: ${path.relative(ROOT, out)}`);

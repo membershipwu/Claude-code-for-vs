@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Build translation dictionaries
+        run: npm run build
+
+      - name: Verify generated dictionaries are committed
+        run: git diff --exit-code -- data/merged-dict.json data/dict-norm.json
+
+      - name: Run tests
+        run: npm run verify
+
+      - name: Build installable VSIX
+        run: npm run package
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: claude-code-zhcn-vsix
+          path: claude-code-zhcn-*.vsix
+          if-no-files-found: error

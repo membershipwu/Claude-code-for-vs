@@ -1,37 +1,47 @@
+/** Verify the installed files by default; --baseline verifies a prospective patch separately. */
 const fs = require('fs');
-const path = require('path');
 const os = require('os');
+const path = require('path');
+const { Engine, patchSource } = require('../lib/engine');
 
-const root = path.join(os.homedir(), '.vscode', 'extensions');
-const dir = fs.readdirSync(root).filter((n) => /^anthropic\.claude-code-/i.test(n)).sort().pop();
-const w = fs.readFileSync(path.join(root, dir, 'webview', 'index.js'), 'utf8');
-const h = fs.readFileSync(path.join(root, dir, 'extension.js'), 'utf8');
-const pkg = JSON.parse(fs.readFileSync(path.join(root, dir, 'package.json'), 'utf8'));
-
-const cjk = (s) => (s.match(/[\u4e00-\u9fff]/g) || []).length;
-console.log('目录:', dir);
-console.log('聊天界面中文字符:', cjk(w), '| 宿主界面:', cjk(h));
-const cmds = pkg.contributes.commands;
-console.log('命令标题中文:', cmds.filter((c) => /[\u4e00-\u9fff]/.test(c.title || '')).length + '/' + cmds.length);
-
-const pairs = [
-    ['未分组（左侧分组名）', 'name:"未分组"'],
-    ['打开（状态列）', 'open:"打开"'],
-    ['已关闭（状态列）', 'closed:"已关闭"'],
-    ['正在工作（状态列）', 'working:"正在工作"'],
-    ['已完成（状态列）', 'finished:"已完成"'],
-    ['失败（状态列）', 'failed:"失败"'],
-    ['已停止（状态列）', 'stopped:"已停止"'],
-    ['等待你的许可（状态列）', 'waiting:"等待你的许可"'],
-    ['状态（段标题）', '"状态"'],
-    ['标签页（段标题）', '"标签页"'],
-];
-let ok = 0;
-console.log('\n--- 用户报告的漏译点 ---');
-for (const [label, needle] of pairs) {
-    const hit = w.includes(needle);
-    if (hit) ok++;
-    console.log(`${hit ? 'OK  ' : 'MISS'}  ${label}`);
+const ROOT = path.resolve(__dirname, '..');
+function arg(name, fallback) {
+    const index = process.argv.indexOf(name);
+    return index > 0 && process.argv[index + 1] ? process.argv[index + 1] : fallback;
 }
-console.log(`\n${ok}/${pairs.length} 已汉化`);
-process.exitCode = ok === pairs.length ? 0 : 1;
+const engine = new Engine({
+    extensionsRoot: arg('--extensions-root', path.join(os.homedir(), '.vscode', 'extensions')),
+    storageDir: arg('--storage', path.join(ROOT, '.cache')),
+    dataDir: path.join(ROOT, 'data'),
+});
+const installed = engine.installed();
+if (!installed) {
+    console.error('未找到已安装的 Claude Code 扩展。');
+    process.exit(2);
+}
+
+const baselineMode = process.argv.includes('--baseline');
+const english = baselineMode ? engine.englishFiles(installed).files.webview : null;
+const localized = baselineMode
+    ? patchSource(english, engine.bundle, 'webview').text
+    : fs.readFileSync(installed.files.webview, 'utf8');
+console.log('Checking ' + (baselineMode ? 'prospective baseline output' : 'ACTUAL INSTALLED FILE') + ': ' + installed.files.webview);
+const checks = [
+    ['left-rail ungrouped label', 'name:"Ungrouped"', 'name:"未分组"'],
+    ['status-filter needs-input label', 'needs_input:"Needs input"', 'needs_input:"需要输入"'],
+    ['status-filter working label', 'working:"Working"', 'working:"正在工作"'],
+    ['status-filter completed label (formerly missing)', 'completed:"Completed"', 'completed:"已完成"'],
+    ['tab-filter open label', 'open:"Open"', 'open:"打开"'],
+    ['tab-filter closed label', 'closed:"Closed"', 'closed:"已关闭"'],
+    ['status-filter heading', 'vHn="Status"', 'vHn="状态"'],
+    ['tab-filter heading', '_Hn="Tabs"', '_Hn="标签页"'],
+];
+let failures = 0;
+for (const [description, source, expected] of checks) {
+    const ok = localized.includes(expected) && (baselineMode ? english.includes(source) : !localized.includes(source));
+    console.log((ok ? 'PASS' : 'FAIL') + '  ' + description);
+    if (!ok) failures++;
+}
+console.log('\n' + (checks.length - failures) + '/' + checks.length + ' translated labels verified in ' +
+    (baselineMode ? 'the prospective baseline output.' : 'the actual installed file.'));
+if (failures) process.exitCode = 1;
