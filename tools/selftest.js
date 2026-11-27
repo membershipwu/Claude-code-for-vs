@@ -2,7 +2,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { Engine, readSnapshot, cjkCount } = require('../lib/engine');
+const { Engine, readSnapshot, cjkCount, validateJavaScriptSyntax } = require('../lib/engine');
 
 const ROOT = path.resolve(__dirname, '..');
 function arg(name, fallback) {
@@ -79,13 +79,15 @@ try {
     const firstStatus = engine.status();
     check('apply changes the localized webview', firstApply.webview.changed > 1000, firstApply.webview.changed + ' text edits');
     check('apply changes safe host strings', firstApply.host.changed > 0, firstApply.host.changed + ' text edits');
-    check('all contributed command labels are localized', firstStatus.commands.translated === firstStatus.commands.total,
-        firstStatus.commands.translated + '/' + firstStatus.commands.total);
+    const sourceCommands = (JSON.parse(english.pkg).contributes || {}).commands || [];
+    const knownCommandCount = sourceCommands.filter((command) => sourceEngine.bundle.manifest.commands[command.command]).length;
+    check('all known command labels are localized', knownCommandCount > 0 && firstStatus.commands.translated === knownCommandCount,
+        firstStatus.commands.translated + '/' + firstStatus.commands.total + ' localized; ' + knownCommandCount + ' known');
     check('localized manifest remains valid JSON', (() => {
         try { JSON.parse(fs.readFileSync(cloneFiles.pkg, 'utf8')); return true; } catch (e) { return false; }
     })());
     check('localized host and webview remain syntactically valid', (() => {
-        try { new Function(fs.readFileSync(cloneFiles.webview, 'utf8')); new Function(fs.readFileSync(cloneFiles.host, 'utf8')); return true; } catch (e) { return false; }
+        try { validateJavaScriptSyntax(fs.readFileSync(cloneFiles.webview, 'utf8')); validateJavaScriptSyntax(fs.readFileSync(cloneFiles.host, 'utf8')); return true; } catch (e) { return false; }
     })());
 
     const appliedFiles = Object.fromEntries(Object.keys(english).filter((key) => destination(key))

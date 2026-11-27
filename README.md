@@ -16,7 +16,7 @@
 也可以从命令行安装：
 
 ~~~sh
-code --install-extension claude-code-zhcn-2.0.3.vsix
+code --install-extension claude-code-zhcn-2.0.4.vsix
 ~~~
 
 源码打包需要 Node.js 18 或更新版本与网络连接：
@@ -56,7 +56,7 @@ Claude Code 更新后，原来的补丁可能随新版本安装而消失。运�
 
 会话状态筛选中的 **Needs input / Working / Completed** 分组现分别映射为 **需要输入 / 正在工作 / 已完成**。另有 **Status / Tabs、Open / Closed、Ungrouped** 等标签的回归检查。具体翻译随目标扩展版本及其界面规则变化；版本适配记录见仓库内的 docs/版本适配矩阵.md。
 
-当前确认适配 Claude Code **2.1.329**。其他版本可能会保留未识别的新英文文案。应用未知版本前，扩展会要求确认。翻译版本与用户安装包版本彼此独立；运行时版本号见 package.json。
+当前确认适配 Claude Code **2.1.332** 和 **2.1.329**。其他版本可能会保留未识别的新英文文案。应用未知版本前，扩展会要求确认。翻译版本与用户安装包版本彼此独立；运行时版本号见 package.json。
 
 不翻译 Claude Code 发给模型的提示词与工具协议、代码中的属性名与枚举值、链接、路径、模型 ID、日志，以及内嵌编辑器和第三方组件的界面。
 

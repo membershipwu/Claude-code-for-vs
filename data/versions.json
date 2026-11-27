@@ -2,6 +2,12 @@
   "_doc": "版本适配矩阵。只有有版本专属可复现验证时使用 verified；untested 表示缺少可复现基线，应用前需要用户确认；broken 表示已知不兼容并禁止应用。保留明确的当前宿主 allowKinds 范围。",
   "dictionaryVersion": "2026.11.20",
   "versions": {
+    "2.1.332": {
+      "status": "verified",
+      "since": "2026-11-27",
+      "note": "使用本机英文快照在临时副本完成完整应用、重复应用、还原及再次应用；聊天界面改写 2087 处、宿主界面 32 处，34/34 个命令标题已本地化。已覆盖 import.meta 的语法自检；未完成完整 UI 视觉验收。",
+      "webviewSha256_16": "见 docs/版本适配矩阵.md"
+    },
     "2.1.328": {
       "status": "untested",
       "since": "2026-11-20",

@@ -2,7 +2,7 @@
   "name": "claude-code-zhcn",
   "displayName": "Claude Code 简体中文汉化",
   "description": "为 Claude Code for VS Code 提供简体中文界面汉化、版本检测与安全恢复。",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "publisher": "claude-code-zhcn",
   "license": "MIT",
   "author": "membershipwu",
@@ -97,6 +97,6 @@
     "smoke": "node tools/extension-smoke.js",
     "selftest": "node tools/selftest.js",
     "verify": "node tools/verify.js",
-    "package": "npx --yes @vscode/vsce@^3 package --no-dependencies --out claude-code-zhcn-2.0.3.vsix"
+    "package": "npx --yes @vscode/vsce@^3 package --no-dependencies --out claude-code-zhcn-2.0.4.vsix"
   }
 }

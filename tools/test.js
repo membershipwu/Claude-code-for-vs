@@ -6,7 +6,7 @@ const path = require('node:path');
 const test = require('node:test');
 
 const ROOT = path.resolve(__dirname, '..');
-const { Engine, readSnapshot, snapshotDir, atomicWriteFiles } = require('../lib/engine');
+const { Engine, readSnapshot, snapshotDir, atomicWriteFiles, patchSource } = require('../lib/engine');
 const { tokenize } = require('../lib/lexer');
 const { planSource, editsFromPlan } = require('../lib/planner');
 const { inspectSessionLabels } = require('../lib/session-labels');
@@ -57,6 +57,15 @@ test('reported session-status labels are safely translated at UI call sites', ()
     assert.match(result, /needs_input:"需要输入",working:"正在工作",completed:"已完成"/);
     assert.match(result, /open:"打开",closed:"已关闭"/);
     assert.equal(result.includes('"Open"'), false);
+});
+
+test('syntax validation accepts import.meta while preserving it and still rejects invalid JavaScript', () => {
+    const engine = new Engine({ extensionsRoot: '', storageDir: '', dataDir: path.join(ROOT, 'data') });
+    const source = 'const asset=new URL("monaco.js",import.meta.url);const button={title:"Cancel"};';
+    const patched = patchSource(source, engine.bundle, 'webview');
+    assert.match(patched.text, /import\.meta\.url/);
+    assert.match(patched.text, /title:"取消"/);
+    assert.throws(() => patchSource('const = ;', engine.bundle, 'webview'), /语法校验失败/);
 });
 
 test('apply and restore preserve the complete original install byte for byte', (t) => {
